@@ -6,7 +6,6 @@ on:
 permissions: {}
 jobs:
   build-format-compatible:
-    if: ${{ github.repository_owner == 'facebook' }}
     runs-on:
       labels: 16-core-ubuntu
     container:

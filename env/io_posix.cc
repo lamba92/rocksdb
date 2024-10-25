@@ -46,6 +46,14 @@
 #define F_SET_RW_HINT (F_LINUX_SPECIFIC_BASE + 12)
 #endif
 
+#ifdef OS_WATCHOS
+#define fread_unlocked fread
+#endif
+
+#ifdef OS_TVOS
+#define fread_unlocked fread
+#endif
+
 namespace ROCKSDB_NAMESPACE {
 
 std::string IOErrorMsg(const std::string& context,
