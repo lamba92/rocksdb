@@ -21,7 +21,6 @@ jobs:
           git clone https://github.com/gflags/gflags.git
           cd gflags
           echo "we are in $(pwd)"
-          mkdir -p build
           cd build
           echo "we are in $(pwd)"
           cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
