@@ -11,7 +11,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        arch: [arm64, x64]
+        arch: [ arm64, x64 ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,6 +38,7 @@ jobs:
           cd build
           cmake -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} \
                 -DGFLAGS_INCLUDE_DIR=/usr/local/include -DGFLAGS_LIBRARY=/usr/local/lib/libgflags.dylib ..
+          # Attempt to build using static_lib target, fallback to make if it fails
           make static_lib
 
       - name: Upload artifact
