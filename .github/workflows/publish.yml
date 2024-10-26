@@ -1,0 +1,138 @@
+name: Build and Publish RocksDB for Multiple Platforms
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment for macOS
+        run: |
+          if [ "${{ matrix.arch }}" == "x64" ]; then
+            export CFLAGS="-arch x86_64"
+            export LDFLAGS="-arch x86_64"
+          fi
+
+      - name: Build RocksDB (Static Library)
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} ..
+          make static_lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-macOS-${{ matrix.arch }}-snapshot
+          path: build
+
+  build-apple-mobile:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [iOS, tvOS, watchOS]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment for Apple mobile
+        run: |
+          export SDKROOT=$(xcrun --sdk ${matrix.target,,} --show-sdk-path)
+
+      - name: Build RocksDB (Static Library)
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_SYSTEM_NAME=${{ matrix.target }} -DCMAKE_SYSTEM_PROCESSOR=arm64 ..
+          make static_lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-${{ matrix.target }}-snapshot
+          path: build
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake zlib1g-dev libbz2-dev liblz4-dev libsnappy-dev libzstd-dev
+
+      - name: Build RocksDB (Static Library with Portability)
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPORTABLE=1 ..
+          make static_lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-linux-${{ matrix.arch }}-snapshot
+          path: build
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          choco install cmake --install-arguments="ADD_CMAKE_TO_PATH=System" -y
+
+      - name: Build RocksDB (Static Library with Portability)
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Visual Studio 16 2019" -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=x64 -DPORTABLE=1 ..
+          cmake --build . --config Release --target static_lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-windows-snapshot
+          path: build
+
+  build-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+
+      - name: Build RocksDB for WASM (Static Library with Portability)
+        run: |
+          mkdir -p build
+          cd build
+          emcmake cmake -DCMAKE_SYSTEM_NAME=Emscripten -DCMAKE_SYSTEM_PROCESSOR=wasm32 -DPORTABLE=1 ..
+          emmake make static_lib
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocksdb-wasm-snapshot
+          path: build
