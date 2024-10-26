@@ -19,8 +19,8 @@ jobs:
       - name: Build and Install gflags from Source
         run: |
           git clone https://github.com/gflags/gflags.git
-          cd gflags
-          mkdir -p build && cd build && echo "Building gflags from $(pwd)"
+          cd gflags/build
+          echo "Building gflags from $(pwd)"
           cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
           make
           sudo make install
