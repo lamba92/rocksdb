@@ -20,8 +20,8 @@ jobs:
         run: |
           git clone https://github.com/gflags/gflags.git
           cd gflags
-          mkdir build && cd build
-          cmake .. -DBUILD_SHARED_LIBS=ON
+          mkdir -p build && cd build
+          cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
           make
           sudo make install
 
@@ -36,7 +36,8 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} ..
+          cmake -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} \
+                -DGFLAGS_INCLUDE_DIR=/usr/local/include -DGFLAGS_LIBRARY=/usr/local/lib/libgflags.dylib ..
           make static_lib
 
       - name: Upload artifact
